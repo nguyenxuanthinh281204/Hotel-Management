@@ -17,7 +17,6 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String bookingConfirmationCode;
     private String roomType;
     private BigDecimal roomPrice;
     private String roomPhotoUrl;
@@ -27,8 +26,7 @@ public class Room {
     @Override
     public String toString() {
         return "Room{" +
-                "bookingConfirmationCode='" + bookingConfirmationCode + '\'' +
-                ", id=" + id +
+                "id=" + id +
                 ", roomType='" + roomType + '\'' +
                 ", roomPrice=" + roomPrice +
                 ", roomPhotoUrl='" + roomPhotoUrl + '\'' +
