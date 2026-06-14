@@ -17,7 +17,7 @@ public interface IUserService {
 
     Response getUserById(String userId);
 
-    Response getMyInfo(String userID);
+    Response getMyInfo(String email);
 
 
 }

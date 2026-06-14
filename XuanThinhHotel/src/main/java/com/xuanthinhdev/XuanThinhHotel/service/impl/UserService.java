@@ -2,15 +2,20 @@ package com.xuanthinhdev.XuanThinhHotel.service.impl;
 
 import com.xuanthinhdev.XuanThinhHotel.dto.LoginRequest;
 import com.xuanthinhdev.XuanThinhHotel.dto.Response;
+import com.xuanthinhdev.XuanThinhHotel.dto.UserDTO;
 import com.xuanthinhdev.XuanThinhHotel.entity.User;
 import com.xuanthinhdev.XuanThinhHotel.exception.OurException;
 import com.xuanthinhdev.XuanThinhHotel.repo.UserRepository;
 import com.xuanthinhdev.XuanThinhHotel.service.interfac.IUserService;
 import com.xuanthinhdev.XuanThinhHotel.utils.JWTUtils;
+import com.xuanthinhdev.XuanThinhHotel.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserService implements IUserService {
@@ -39,42 +44,157 @@ public class UserService implements IUserService {
                 throw new OurException(user.getEmail() +"Already Exist");
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
-
+            User saveUser = userRepository.save(user);
+            UserDTO userDTO = Utils.mapUserEntityToUserDTO(saveUser);
+            response.setStatusCode(200);
+            response.setUser(userDTO);
         } catch (OurException e) {
+            response.setStatusCode(400);
+            response.setMessage(e.getMessage());
         }
         catch (Exception e) {
-            throw new RuntimeException(e);
+            response.setStatusCode(500);
+            response.setMessage("Error occurred during user registration"+ e.getMessage());
         }
-        return null;
+        return response;
     }
 
     @Override
     public Response login(LoginRequest loginRequest) {
-        return null;
+        Response response = new Response();
+
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getEmail(),loginRequest.getPassword()));
+            var user= userRepository.findByEmail(loginRequest.getEmail()).orElseThrow(()-> new OurException("user not found"));
+            var token = jwtUtils.generateToken(user);
+            response.setStatusCode(200);
+            response.setToken(token);
+            response.setRole(user.getRole());
+            response.setExpirationTime("7 days");
+            response.setMessage("successful");
+
+        }catch (OurException e){
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error occurred during user Login"+ e.getMessage());
+        }
+
+
+        return response;
     }
 
     @Override
     public Response getAllUsers() {
-        return null;
+        Response response = new Response();
+        try {
+            List<User> userList = userRepository.findAll();
+            List<UserDTO> userDTOList = Utils.mapUserListEntityToUserListDTO(userList);
+            response.setStatusCode(200);
+            response.setMessage("successful");
+            response.setUserList(userDTOList);
+
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error getting all users "+ e.getMessage());
+        }
+
+        return response;
     }
 
     @Override
     public Response getUserBookingHistory(String userId) {
-        return null;
+        Response response = new Response();
+
+        try {
+            User user = userRepository.findById(Long.valueOf(userId)).orElseThrow(()-> new OurException("User Not Found"));
+            UserDTO userDTO = Utils.mapUserEntityToUserDTOPlusUserBookingsAndRoom(user);
+            response.setStatusCode(200);
+            response.setMessage("successful");
+            response.setUser(userDTO);
+
+        }catch (OurException e){
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error getting all users " + e.getMessage());
+        }
+
+        return response;
     }
 
     @Override
     public Response deleteUser(String userId) {
-        return null;
+
+        Response response = new Response();
+
+        try {
+            userRepository.findById(Long.valueOf(userId)).orElseThrow(()-> new OurException("User Not Found"));
+            userRepository.deleteById(Long.valueOf(userId));
+            response.setStatusCode(200);
+            response.setMessage("successful");
+
+        }catch (OurException e){
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error getting all users " + e.getMessage());
+        }
+
+        return response;
     }
 
     @Override
     public Response getUserById(String userId) {
-        return null;
+
+        Response response = new Response();
+
+        try {
+            User user = userRepository.findById(Long.valueOf(userId)).orElseThrow(()-> new OurException("User Not Found"));
+            UserDTO userDTO = Utils.mapUserEntityToUserDTO(user);
+            response.setStatusCode(200);
+            response.setMessage("successful");
+            response.setUser(userDTO);
+
+        }catch (OurException e){
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error getting all users " + e.getMessage());
+        }
+
+        return response;
     }
 
     @Override
-    public Response getMyInfo(String userID) {
-        return null;
+    public Response getMyInfo(String email) {
+
+        Response response = new Response();
+
+        try {
+            User user = userRepository.findByEmail(email).orElseThrow(()-> new OurException("User Not Found"));
+            UserDTO userDTO = Utils.mapUserEntityToUserDTO(user);
+            response.setStatusCode(200);
+            response.setMessage("successful");
+            response.setUser(userDTO);
+
+        }catch (OurException e){
+            response.setStatusCode(404);
+            response.setMessage(e.getMessage());
+
+        } catch (Exception e) {
+            response.setStatusCode(500);
+            response.setMessage("Error getting all users " + e.getMessage());
+        }
+
+        return response;
     }
 }
